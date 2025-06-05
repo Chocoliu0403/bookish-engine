@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>可愛跳躍遊戲</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #b3e0ff;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+    }
+    #gameCanvas {
+      display: block;
+      margin: 0 auto;
+      background: linear-gradient(to top, #b3e0ff 70%, #ffffff 100%);
+      box-shadow: 0 0 16px #7ec7e6;
+      border-radius: 20px;
+    }
+    #gameOverPanel {
+      position: absolute;
+      left: 50%;
+      top: 30%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.96);
+      border-radius: 16px;
+      box-shadow: 0 0 24px #aaa;
+      text-align: center;
+      padding: 36px 28px;
+      display: none;
+      z-index: 10;
+    }
+    #gameOverPanel h2 { margin: 0 0 8px 0; }
+    #scoreBoard {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 12px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      padding: 6px 18px;
+      font-size: 22px;
+      box-shadow: 0 2px 8px #9ecbe3;
+      z-index: 5;
+    }
+    @media (max-width: 700px) {
+      #gameCanvas {
+        width: 100vw !important;
+        height: 80vh !important;
+      }
+      #scoreBoard {
+        font-size: 20px;
+        top: 10px;
+      }
+      #gameOverPanel {
+        width: 85vw;
+        top: 40%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="scoreBoard">分數：0</div>
+  <canvas id="gameCanvas" width="400" height="700"></canvas>
+  <div id="gameOverPanel">
+    <h2>遊戲結束！</h2>
+    <p id="finalScore"></p>
+    <button onclick="restartGame()">重新開始</button>
+  </div>
+  <audio id="jumpSound" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa6d13.mp3"></audio>
+  <audio id="starSound" src="https://cdn.pixabay.com/audio/2022/10/16/audio_12f0b7e771.mp3"></audio>
+  <audio id="rocketSound" src="https://cdn.pixabay.com/audio/2022/12/19/audio_126eeb5bf9.mp3"></audio>
+  <audio id="gameOverSound" src="https://cdn.pixabay.com/audio/2022/10/16/audio_12f0b6aebf.mp3"></audio>
+  <audio id="bgMusic" src="https://cdn.pixabay.com/audio/2023/03/27/audio_128b0c4e7c.mp3" loop></audio>
+  <script>
+    // 遊戲參數
+    const W = 400, H = 700;
+    const GRAVITY = 0.35;
+    const JUMP_VELOCITY = -9.7;
+    const SPRING_VELOCITY = -15;
+    const PLAYER_W = 44, PLAYER_H = 44;
+    const PLATFORM_W = 68, PLATFORM_H = 16;
+    const MAX_PLATFORMS = 11;
+    const PLATFORM_TYPES = ['normal', 'move', 'break', 'spring', 'disappear'];
+    const PLATFORM_COLORS = {
+      normal: "#8cd18c",
+      move: "#f9d66a",
+      break: "#c9b4e1",
+      spring: "#78c0e0",
+      disappear: "#e6a1a1"
+    };
+    const ITEM_TYPES = ['star', 'rocket', 'shield'];
+    const ENEMY_TYPES = ['monster'];
+    const LEFT_KEYS = ['ArrowLeft', 'a', 'A'];
+    const RIGHT_KEYS = ['ArrowRight', 'd', 'D'];
+
+    // 遊戲狀態
+    let canvas, ctx, scoreBoard, overPanel, finalScore;
+    let bgY = 0, bgSpeed = 0.25;
+    let player, platforms, items, enemies;
+    let score = 0, gameOver = false, shield = false, shieldTimer = 0, rocket = false, rocketTimer = 0;
+    let input = { left: false, right: false };
+    let lastUpdate = Date.now();
+
+    // 載入
+    window.onload = function() {
+      canvas = document.getElementById('gameCanvas');
+      ctx = canvas.getContext('2d');
+      scoreBoard = document.getElementById('scoreBoard');
+      overPanel = document.getElementById('gameOverPanel');
+      finalScore = document.getElementById('finalScore');
+      initGame();
+      requestAnimationFrame(gameLoop);
+      // 音樂自動播放（部分瀏覽器需互動後才能播放）
+      setTimeout(() => document.getElementById('bgMusic').play().catch(()=>{}), 800);
+    };
+
+    // 初始化
+    function initGame() {
+      player = {
+        x: W/2 - PLAYER_W/2, y: H-PLAYER_H-40, vx: 0, vy: JUMP_VELOCITY, w: PLAYER_W, h: PLAYER_H,
+        onGround: false, anim: 'idle', img: null
+      };
+      platforms = [];
+      items = [];
+      enemies = [];
+      score = 0;
+      bgY = 0;
+      gameOver = false;
+      shield = false;
+      shieldTimer = 0;
+      rocket = false;
+      rocketTimer = 0;
+      input = { left: false, right: false };
+      overPanel.style.display = 'none';
+      // 生成平台
+      let y = H-50;
+      for (let i=0; i<MAX_PLATFORMS; i++) {
+        let type = i==0 ? 'normal' : (Math.random()<0.18 ? PLATFORM_TYPES[Math.floor(Math.random()*PLATFORM_TYPES.length)] : 'normal');
+        let p = {x:Math.random()*(W-PLATFORM_W), y, type, dx: (type=='move'? (Math.random()<0.5?1:-1)*2.5 : 0), broken: false, disappear: false, spring: false};
+        platforms.push(p);
+        y -= H/MAX_PLATFORMS;
+      }
+      // 角色圖片繪製（Q版太空人）
+      player.img = new Image();
+      player.img.src = "https://cdn.pixabay.com/photo/2022/02/20/15/45/astronaut-7026549_1280.png";
+    }
+
+    // 遊戲主迴圈
+    function gameLoop() {
+      if (gameOver) return;
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 更新邏輯
+    function update() {
+      let now = Date.now(), dt = (now - lastUpdate)/16.67;
+      lastUpdate = now;
+      // 控制
+      if (input.left) player.vx = -4.2;
+      else if (input.right) player.vx = 4.2;
+      else player.vx *= 0.85;
+      player.x += player.vx * dt;
+      // 邊界
+      if (player.x < -PLAYER_W/2) player.x = W-PLAYER_W/2;
+      if (player.x > W-PLAYER_W/2) player.x = -PLAYER_W/2;
+      // 垂直運動
+      if (rocket) {
+        player.vy = SPRING_VELOCITY*1.2;
+        rocketTimer -= dt;
+        if (rocketTimer <= 0) rocket = false;
+      } else {
+        player.vy += GRAVITY * dt;
+      }
+      player.y += player.vy * dt;
+      // 地圖隨角色捲動
+      if (player.y < H/3 && player.vy<0) {
+        let dy = H/3 - player.y;
+        player.y = H/3;
+        for (let p of platforms) p.y += dy;
+        for (let i of items) i.y += dy;
+        for (let e of enemies) e.y += dy;
+        bgY += dy * bgSpeed;
+        score += Math.floor(dy/1.8);
+      }
+      // 平台生成與刪除
+      while (platforms.length<MAX_PLATFORMS) {
+        let lastY = platforms[platforms.length-1].y;
+        let type = Math.random()<0.17 ? PLATFORM_TYPES[Math.floor(Math.random()*PLATFORM_TYPES.length)] : 'normal';
+        let p = {x:Math.random()*(W-PLATFORM_W), y: lastY-H/MAX_PLATFORMS, type, dx:(type=='move'? (Math.random()<0.5?1:-1)*2.3 : 0), broken:false, disappear:false, spring:false};
+        platforms.push(p);
+        // 道具隨機生成
+        if (Math.random()<0.14) addItem(p.y);
+        // 怪物生成
+        if (Math.random()<0.08) addEnemy(p.y);
+      }
+      // 平台更新
+      for (let p of platforms) {
+        if (p.type=='move') {
+          p.x += p.dx * dt;
+          if (p.x<0 || p.x>W-PLATFORM_W) p.dx *= -1;
+        }
+      }
+      // 刪除離開畫面的平台
+      platforms = platforms.filter(p => p.y<H+20 && !p.disappear);
+      items = items.filter(i => i.y<H+40 && !i.collected);
+      enemies = enemies.filter(e => e.y<H+40 && !e.dead);
+      // 道具碰撞
+      for (let i of items) {
+        if (!i.collected && collide(player, i)) {
+          if (i.type=='star') {
+            score += 500;
+            document.getElementById('starSound').play();
+            i.collected = true;
+          }
+          if (i.type=='rocket') {
+            rocket = true;
+            rocketTimer = 60;
+            document.getElementById('rocketSound').play();
+            i.collected = true;
+          }
+          if (i.type=='shield') {
+            shield = true;
+            shieldTimer = 240;
+            i.collected = true;
+          }
+        }
+      }
+      // 怪物碰撞
+      for (let e of enemies) {
+        if (!e.dead && collide(player, e)) {
+          if (shield) {
+            e.dead = true;
+            shield = false;
+            shieldTimer = 0;
+          } else {
+            endGame();
+            return;
+          }
+        }
+      }
+      // 平台碰撞
+      let hit = false;
+      if (player.vy > 0) {
+        for (let p of platforms) {
+          if (collide(player, {
+            x: p.x, y: p.y, w: PLATFORM_W, h: PLATFORM_H+4
+          }) && player.y+PLAYER_H<=p.y+PLATFORM_H && !p.broken && !p.disappear) {
+            if (p.type=='break') { p.broken = true; continue; }
+            if (p.type=='disappear') { p.disappear = true; continue; }
+            if (p.type=='spring') {
+              player.vy = SPRING_VELOCITY;
+              document.getElementById('jumpSound').play();
+              player.anim = 'jump';
+              hit = true;
+              break;
+            } else {
+              player.vy = JUMP_VELOCITY;
+              document.getElementById('jumpSound').play();
+              player.anim = 'jump';
+              hit = true;
+              break;
+            }
+          }
+        }
+      }
+      // 彈簧平台動畫
+      for (let p of platforms) {
+        if (p.type=='spring' && hit && collide(player, p)) p.spring = true;
+      }
+      // 盾計時
+      if (shield) {
+        shieldTimer -= dt;
+        if (shieldTimer<=0) { shield=false; shieldTimer=0; }
+      }
+      // 掉下去
+      if (player.y > H + 40) {
+        endGame();
+        return;
+      }
+      // 計分板
+      scoreBoard.innerText = "分數：" + score;
+    }
+
+    // 生成道具
+    function addItem(y) {
+      let rand = Math.random();
+      let type = rand < 0.5 ? 'star' : (rand < 0.8 ? 'rocket' : 'shield');
+      let x = Math.random() * (W-30) + 5;
+      let img = new Image();
+      img.src = type=='star'
+        ? "https://cdn.pixabay.com/photo/2012/04/11/17/25/star-28957_1280.png"
+        : type=='rocket'
+        ? "https://cdn.pixabay.com/photo/2017/01/31/13/14/rocket-2028858_1280.png"
+        : "https://cdn.pixabay.com/photo/2013/07/13/12/37/shield-146298_1280.png";
+      items.push({x, y: y-22, w: 28, h: 28, type, img, collected: false});
+    }
+
+    // 生成敵人
+    function addEnemy(y) {
+      let x = Math.random() * (W-38) + 2;
+      let img = new Image();
+      img.src = "https://cdn.pixabay.com/photo/2016/03/31/20/12/alien-1292781_1280.png";
+      enemies.push({x, y: y-28, w: 38, h: 38, img, dead: false});
+    }
+
+    // 碰撞檢查
+    function collide(a, b) {
+      return a.x + a.w > b.x && a.x < b.x + b.w &&
+             a.y + a.h > b.y && a.y < b.y + b.h;
+    }
+
+    // 畫面繪製
+    function draw() {
+      // 背景
+      ctx.clearRect(0,0,W,H);
+      // 天空與雲
+      ctx.fillStyle = "#b3e0ff";
+      ctx.fillRect(0,0,W,H);
+      for (let i=0;i<8;i++) {
+        let cy = (bgY/8 + i*110)%H;
+        ctx.globalAlpha = 0.26;
+        ctx.beginPath();
+        ctx.arc(i*48%W+60, cy, 32, 0, Math.PI*2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      }
+      // 平台
+      for (let p of platforms) {
+        ctx.save();
+        ctx.fillStyle = PLATFORM_COLORS[p.type] || "#fff";
+        ctx.fillRect(p.x, p.y, PLATFORM_W, PLATFORM_H);
+        // 彈簧
+        if (p.type=='spring') {
+          ctx.fillStyle = "#ff7f50";
+          ctx.fillRect(p.x+PLATFORM_W/2-7, p.y-12, 14, 12);
+          ctx.beginPath();
+          ctx.arc(p.x+PLATFORM_W/2, p.y-10, 8, 0, Math.PI*2);
+          ctx.fillStyle = "#ffe66d";
+          ctx.fill();
+        }
+        // 破裂
+        if (p.type=='break' && p.broken) {
+          ctx.globalAlpha = 0.5;
+          ctx.fillStyle = "#555";
+          ctx.fillRect(p.x, p.y, PLATFORM_W, PLATFORM_H);
+          ctx.globalAlpha = 1.0;
+        }
+        ctx.restore();
+      }
+      // 道具
+      for (let i of items) {
+        if (!i.collected) ctx.drawImage(i.img, i.x, i.y, i.w, i.h);
+      }
+      // 敵人
+      for (let e of enemies) {
+        if (!e.dead) ctx.drawImage(e.img, e.x, e.y, e.w, e.h);
+      }
+      // 角色
+      if (shield) {
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(player.x+PLAYER_W/2, player.y+PLAYER_H/2, PLAYER_W/1.5, 0, Math.PI*2);
+        ctx.fillStyle = "#ffe66d";
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+      }
+      ctx.drawImage(player.img, player.x, player.y, PLAYER_W, PLAYER_H);
+      // 火箭特效
+      if (rocket) {
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = "#f45";
+        ctx.beginPath();
+        ctx.ellipse(player.x+PLAYER_W/2, player.y+PLAYER_H+8, 10, 24, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+      }
+      // 分數
+      ctx.save();
+      ctx.font = "20px Arial";
+      ctx.fillStyle = "#338";
+      ctx.fillText("分數: " + score, 16, 32);
+      ctx.restore();
+    }
+
+    // 結束
+    function endGame() {
+      gameOver = true;
+      document.getElementById('gameOverSound').play();
+      overPanel.style.display = 'block';
+      finalScore.innerText = "你獲得了 " + score + " 分！";
+      document.getElementById('bgMusic').pause();
+    }
+
+    // 重新開始
+    function restartGame() {
+      document.getElementById('bgMusic').currentTime = 0;
+      document.getElementById('bgMusic').play();
+      initGame();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 鍵盤控制
+    window.addEventListener('keydown', e=>{
+      if (LEFT_KEYS.includes(e.key)) input.left = true;
+      if (RIGHT_KEYS.includes(e.key)) input.right = true;
+    });
+    window.addEventListener('keyup', e=>{
+      if (LEFT_KEYS.includes(e.key)) input.left = false;
+      if (RIGHT_KEYS.includes(e.key)) input.right = false;
+    });
+
+    // 手機觸控控制
+    canvas = document.getElementById('gameCanvas');
+    canvas.addEventListener('touchstart', function(e){
+      let touch = e.touches[0];
+      let rect = canvas.getBoundingClientRect();
+      let x = touch.clientX - rect.left;
+      if (x < W/2) { input.left = true; input.right = false; }
+      else { input.right = true; input.left = false; }
+    });
+    canvas.addEventListener('touchend', function(e){
+      input.left = false; input.right = false;
+    });
+
+    // 防止滑動滾動
+    document.body.addEventListener('touchmove', function(e) {
+      if (gameOver) return;
+      e.preventDefault();
+    }, {passive:false});
+  </script>
+</body>
+</html>
