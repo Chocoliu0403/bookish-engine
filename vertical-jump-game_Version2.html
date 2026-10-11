@@ -1,96 +1,86 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>可愛跳躍遊戲</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #b3e0ff;
-      overflow: hidden;
-      font-family: 'Segoe UI', 'Arial', sans-serif;
-    }
-    #gameCanvas {
-      display: block;
-      margin: 0 auto;
-      background: linear-gradient(to top, #b3e0ff 70%, #ffffff 100%);
-      box-shadow: 0 0 16px #7ec7e6;
-      border-radius: 20px;
-    }
-    #gameOverPanel {
-      position: absolute;
-      left: 50%;
-      top: 30%;
-      transform: translate(-50%, -50%);
-      background: rgba(255,255,255,0.96);
-      border-radius: 16px;
-      box-shadow: 0 0 24px #aaa;
-      text-align: center;
-      padding: 36px 28px;
-      display: none;
-      z-index: 10;
-    }
-    #gameOverPanel h2 { margin: 0 0 8px 0; }
-    #scoreBoard {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      top: 12px;
-      background: rgba(255,255,255,0.9);
-      border-radius: 12px;
-      padding: 6px 18px;
-      font-size: 22px;
-      box-shadow: 0 2px 8px #9ecbe3;
-      z-index: 5;
-    }
-    /* 新增：開始遊戲畫面 */
-    #startPanel {
-      position: absolute;
-      left: 50%;
-      top: 35%;
-      transform: translate(-50%, -50%);
-      background: rgba(255,255,255,0.93);
-      border-radius: 16px;
-      box-shadow: 0 0 24px #aaa;
-      text-align: center;
-      padding: 36px 28px;
-      z-index: 11;
-      display: none;
-    }
-    @media (max-width: 700px) {
-      #gameCanvas {
-        width: 100vw !important;
-        height: 80vh !important;
-      }
-      #scoreBoard {
-        font-size: 20px;
-        top: 10px;
-      }
-      #gameOverPanel {
-        width: 85vw;
-        top: 40%;
-      }
-      #startPanel {
-        width: 85vw;
-        top: 40%;
-      }
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>星際躍升｜五年級因數與倍數</title>
+<style>
+:root{color-scheme:dark;--bg:#090f25;--panel:#131e39;--line:#314564;--ink:#f2f6ff;--muted:#b4c3dd;--mint:#7cf8d2;--gold:#ffda88}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 10% 0%,#26335a,transparent 50%),var(--bg);color:var(--ink);font-family:system-ui,"Microsoft JhengHei",sans-serif;line-height:1.6}button,select{font:inherit}button,select{border:1px solid var(--line);border-radius:12px;padding:11px 16px;background:#1b2b4a;color:var(--ink)}button{cursor:pointer;font-weight:700}button:hover:not(:disabled){border-color:var(--mint);background:#29445c}button:disabled{opacity:.5;cursor:default}button:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:4px}.primary{background:var(--mint);color:#092d2b;border:0}.primary:hover:not(:disabled){background:#b0ffe7;color:#092d2b}[hidden]{display:none!important}header{max-width:1240px;margin:auto;padding:24px 24px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px}.brand{font-weight:900;letter-spacing:2px}.eyebrow{color:var(--mint);font-size:12px;font-weight:800;letter-spacing:3px}.tag{font-size:13px;color:var(--muted)}main{max-width:1240px;margin:auto;padding:0 24px 32px}.hero{padding:30px 0 22px}.hero h1{font-size:clamp(36px,6vw,62px);line-height:1.15;margin:10px 0 14px;letter-spacing:3px}.hero p{color:var(--muted);max-width:650px}.layout{display:grid;grid-template-columns:1.08fr 1fr;gap:22px}.scene{position:relative;min-height:480px;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:#0c1630}.scene canvas{width:100%;height:100%;position:absolute;inset:0}.sceneTop{position:absolute;top:22px;left:24px;right:24px;display:flex;justify-content:space-between;pointer-events:none}.pill{font-size:13px;background:#10283dcc;border:1px solid #55718b;border-radius:30px;padding:5px 12px}.sceneCaption{position:absolute;bottom:18px;left:24px;right:24px;color:#b8c9e4;font-size:13px}.panel{background:linear-gradient(140deg,#192743,#111b32);border:1px solid var(--line);border-radius:24px;padding:28px}h2{font-size:26px;line-height:1.4;margin:12px 0 16px}p{margin:10px 0}.muted{color:var(--muted)}.setup{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}.setup label{display:grid;gap:8px;font-size:14px}.wide{width:100%}.how{padding-left:22px;color:var(--muted);font-size:15px}.how li{padding:4px 0}.stats{display:flex;gap:20px;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:18px}.stats small{display:block;color:var(--muted);font-size:12px}.stats strong{font-size:23px}.progress{height:5px;background:#263a56;border-radius:9px;margin:12px 0 20px;overflow:hidden}.progress span{display:block;height:100%;background:var(--mint);transition:width .3s}.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}.answer{text-align:left;min-height:64px;font-size:20px}.answer.selected{border:2px solid var(--gold);background:#3c3850}.answer.correct{border-color:var(--mint);background:#17483e}.answer.wrong{border-color:#ffa7af;background:#492739}.key{font-size:12px;opacity:.75;margin-right:14px}.feedback{border-left:3px solid var(--mint);padding:10px 14px;background:#0e1930;border-radius:0 10px 10px 0;min-height:80px}.feedback.error{border-color:#ffb4b4}.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}.actions button{flex:1}.help{font-size:13px;color:var(--muted);margin:14px 0 0}details{margin-top:20px;color:var(--muted);font-size:14px}summary{cursor:pointer}.reviewItem{border-top:1px solid var(--line);padding:14px 0}.reviewItem b{color:var(--ink)}.reviewItem p{margin:5px 0}.resultScore{font-size:52px;color:var(--mint);font-weight:900;line-height:1.2}.paused{text-align:center;padding:45px 0}footer{color:#9aaccc;font-size:12px;margin-top:20px}#review{max-height:360px;overflow:auto;padding-right:10px}dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:28px;max-width:420px;width:90%}dialog::backdrop{background:#020613bb}@media(max-width:800px){header{padding:16px}.tag{display:none}main{padding:0 16px 24px}.hero{padding:16px 0}.layout{grid-template-columns:1fr}.scene{min-height:260px}.panel{padding:22px}.hero h1{font-size:38px}.hero p{font-size:14px}.sceneCaption{font-size:11px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}@media print{header,.hero,.scene,.actions,footer{display:none}.layout{display:block}body,.panel{background:white;color:black}.muted,.reviewItem b{color:black}#review{max-height:none;overflow:visible}}
+</style>
 </head>
 <body>
-  <div id="scoreBoard">分數：0</div>
-  <!-- 新增：開始遊戲畫面 -->
-  <div id="startPanel">
-    <h2>可愛跳躍遊戲</h2>
-    <button onclick="startGame()">開始遊戲</button>
-  </div>
-  <canvas id="gameCanvas" width="400" height="700"></canvas>
-  <div id="gameOverPanel">
-    <h2>遊戲結束！</h2>
-    <p id="finalScore"></p>
-    <button onclick="restartGame()">再來一次</button>
-  </div>
-  <audio id="jumpSound" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa6d13.mp3*
-
+<header><div class="brand">✦ ORBIT LAB <span class="tag">／ 數學探索計畫</span></div><button id="sound" aria-pressed="false">音效：關</button></header>
+<main>
+<div class="hero"><div class="eyebrow">GRADE 05 · MATH EXPEDITION</div><h1>星際躍升<span style="color:var(--mint)">。</span></h1><p>想清楚，再跳躍。用因數與倍數啟動星際平台，一步一步登上你的數學星球。</p></div>
+<div class="layout">
+<section class="scene" aria-label="太空人跳躍動畫；答題進度同步顯示於右方文字">
+<canvas id="gameCanvas" aria-hidden="true"></canvas><div class="sceneTop"><span class="pill">SECTOR 05 / 數學星域</span><span class="pill" id="altitude">高度 0 m</span></div><div class="sceneCaption">每完成一題，上升 100 公尺。慢慢想，也能抵達星空。</div></section>
+<section class="panel">
+<div id="startPanel"><div class="eyebrow">MISSION BRIEF / 任務準備</div><h2>準備好，向上探索！</h2><p class="muted">沒有倒數、沒有掉落懲罰。選出正確答案，太空人就會跳上下一層。</p><div class="setup"><label>任務難度<select id="difficulty"><option value="basic">基礎｜因數、倍數</option><option value="advanced">進階｜公因數、公倍數</option><option value="mixed">綜合｜概念與應用</option></select></label><label>任務長度<select id="length"><option value="5">暖身 5 題</option><option value="10" selected>標準 10 題</option><option value="15">挑戰 15 題</option></select></label></div><ol class="how"><li>點選答案，再按「確認跳躍」。</li><li>鍵盤可按 1–4 選答案，空白鍵確認。</li><li>答錯先看提示，再試一次；每題都有解說。</li></ol><button class="primary wide" id="start">開始探索 →</button><details><summary>老師使用說明與計分方式</summary><p>適用五年級因數與倍數複習。投影共答時，可先讓學生說明理由，再選答案。首答正確得 100 分；重試後完成得 60 分；先看提示且首答正確得 80 分。首答正確率以第一次提交計算，使用提示另行記錄。每題選項只有一個正確答案。</p><p>本頁不收集或上傳學生資料；重新開始會清除本次紀錄。可離線使用，音效需自行開啟。</p></details></div>
+<div id="playPanel" hidden><div class="stats"><div><small>任務進度</small><strong id="counter">1 / 10</strong></div><div><small>探索積分</small><strong id="score">0</strong></div><div><small>首答正確</small><strong id="accuracy">—</strong></div></div><div class="progress"><span id="bar"></span></div><div class="eyebrow" id="category"></div><h2 id="question" tabindex="-1"></h2><div id="answers" class="answers" role="group" aria-label="答案選項"></div><div id="feedback" class="feedback" role="status" aria-live="polite">先讀題目，選好答案後再確認。</div><div class="actions"><button id="hint">給我提示</button><button id="submit" class="primary" disabled>確認跳躍 ↑</button><button id="next" class="primary" hidden>下一題 →</button></div><p class="help">1–4 選答案 · 空白鍵確認 · 答題不限時</p><div class="actions"><button id="pause">暫停</button><button id="restart">重新設定</button></div></div>
+<div id="pausePanel" class="paused" hidden><div class="eyebrow">MISSION PAUSED</div><h2>休息一下，星空等你。</h2><p class="muted">本次進度已保留。</p><button id="resume" class="primary">繼續探索</button></div>
+<div id="resultPanel" hidden><div class="eyebrow">MISSION COMPLETE</div><h2 id="resultTitle">成功抵達！</h2><div class="resultScore" id="finalScore"></div><p id="summary" class="muted"></p><p>看懂理由，就是這趟旅程最大的收穫。</p><h3>任務回顧</h3><div id="review"></div><div class="actions"><button id="again" class="primary">再探索一次</button><button id="settings">回到設定</button></div></div>
+</section></div><footer>五年級數學 · 因數與倍數 ｜ 離線單檔版 · 無外部圖片、字型或音效依賴</footer>
+</main>
+<dialog id="confirmReset" aria-labelledby="resetTitle"><h2 id="resetTitle">重新設定任務？</h2><p>這次的分數與答題紀錄將會清除。</p><div class="actions"><button id="cancelReset">繼續作答</button><button id="doReset">重新設定</button></div></dialog>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const bank=[];
+function add(level,category,text,answer,wrong,hint,explain){const choices=shuffle([answer,...shuffle([...new Set(wrong)].filter(x=>x!==answer)).slice(0,3)]);if(choices.length!==4)throw Error('選項不足');bank.push({id:bank.length,level,category,text,answer,choices,hint,explain});}
+for(const n of [12,18,20,24,30,36,40,42,48,54,60,72]){
+ const factors=Array.from({length:n},(_,i)=>i+1).filter(x=>n%x===0),a=factors[Math.floor(factors.length/2)];
+ add('basic','辨認因數',`哪個數是 ${n} 的因數？`,a,[5,7,8,9,11,13,17].filter(x=>n%x!==0),`用 ${n} 除以各選項，找出沒有餘數的數。`,`${n} ÷ ${a} = ${n/a}，可以整除，所以 ${a} 是 ${n} 的因數。`);
+ const b=n*2;add('basic','辨認倍數',`哪個數是 ${n} 的倍數？`,b,[b-1,b+1,b+3],`倍數可以用 ${n} × 整數來找。`,`${n} × 2 = ${b}，所以 ${b} 是 ${n} 的倍數。`);
+}
+for(const [a,b] of [[8,12],[12,18],[16,24],[18,24],[20,30],[24,36],[15,25],[14,21]]){
+ const g=gcd(a,b),l=a*b/g;
+ add('advanced','最大公因數',`${a} 和 ${b} 的最大公因數是多少？`,g,[g+1,g*2,a+b],`先找出 ${a} 和 ${b} 都能整除的數，再選其中最大的。`,`${a} 的因數：${Array.from({length:a},(_,i)=>i+1).filter(x=>a%x===0).join('、')}；${b} 的因數：${Array.from({length:b},(_,i)=>i+1).filter(x=>b%x===0).join('、')}。共同的因數中，最大是 ${g}。`);
+ add('advanced','最小公倍數',`${a} 和 ${b} 的最小公倍數是多少？`,l,[l+1,l*2,l-1],`分別列出 ${a} 與 ${b} 的正整數倍，找第一個相同的數。`,`${a} 的倍數：${Array.from({length:l/a},(_,i)=>a*(i+1)).join('、')}；${b} 的倍數：${Array.from({length:l/b},(_,i)=>b*(i+1)).join('、')}。第一個相同的是 ${l}。`);
+}
+for(const [n,k] of [[24,6],[36,4],[40,8],[48,6],[30,5],[60,10]]){
+ add('application','生活應用・分裝',`${n} 顆能源球，每 ${k} 顆裝一盒，剛好能裝幾盒？`,n/k,[n/k+1,n/k+2,n/k-1],`「每盒 ${k} 顆」是在問 ${n} 裡面有幾個 ${k}。`,`${n} ÷ ${k} = ${n/k}，剛好裝 ${n/k} 盒，沒有剩下。${k} 是 ${n} 的因數。`);
+}
+for(const [a,b] of [[4,6],[6,8],[3,5],[8,12]]){const l=a*b/gcd(a,b);add('application','生活應用・週期',`藍燈每 ${a} 秒閃一次，綠燈每 ${b} 秒閃一次。現在同時閃，至少再過幾秒會同時閃？`,l,[l+1,l*2,1],`找兩個閃燈週期的最小公倍數；不把現在的 0 秒算進去。`,`${l} ÷ ${a} = ${l/a}，${l} ÷ ${b} = ${l/b}。${l} 是 ${a} 和 ${b} 的最小公倍數，所以再過 ${l} 秒首次同時閃。`);}
+add('application','概念判斷','把 24 張卡片平均分組，每組張數相同且沒有剩下。「每組張數」必須是 24 的什麼？','因數',['倍數','一定是 24','一定是偶數'],'每組張數要能整除總張數。','每組張數能把 24 整除，所以是 24 的因數。例如每組 3 張，能分成 8 組。');
+add('application','概念判斷','一盒有 6 枝筆，買整盒的筆，總枝數一定是 6 的什麼？','倍數',['因數','一定是 6','一定是奇數'],'總枝數 = 每盒枝數 × 盒數。','總枝數是 6 × 整數盒數，所以一定是 6 的倍數，例如 6、12、18 枝。');
+let state='start',questions=[],index=0,score=0,records=[],selected=-1,tries=0,hinted=false,solved=false,pausedFrom='play';
+let height=0,jump=null,ctxAudio=null,soundOn=false;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function tone(ok){if(!soundOn)return;try{ctxAudio??=new(window.AudioContext||window.webkitAudioContext)();ctxAudio.resume().catch(()=>{});const t=ctxAudio.currentTime;for(let i=0;i<3;i++){const o=ctxAudio.createOscillator(),g=ctxAudio.createGain();o.type='sine';o.frequency.value=(ok?[440,554,660]:[260,220,196])[i];g.gain.setValueAtTime(0,t+i*.09);g.gain.linearRampToValueAtTime(.08,t+i*.09+.01);g.gain.exponentialRampToValueAtTime(.001,t+i*.09+.16);o.connect(g);g.connect(ctxAudio.destination);o.start(t+i*.09);o.stop(t+i*.09+.17);}}catch{soundOn=false;updateSound();}}
+function updateSound(){$('sound').textContent=`音效：${soundOn?'開':'關'}`;$('sound').setAttribute('aria-pressed',String(soundOn));}
+$('sound').onclick=()=>{soundOn=!soundOn;updateSound();if(soundOn)tone(true);};
+function show(panel){for(const id of ['startPanel','playPanel','pausePanel','resultPanel'])$(id).hidden=id!==panel;}
+function start(){const level=$('difficulty').value,n=Number($('length').value);questions=shuffle(bank.filter(q=>level==='mixed'||q.level===level)).slice(0,n).map(q=>({...q,choices:shuffle(q.choices)}));index=0;score=0;records=[];height=0;jump=null;state='play';show('playPanel');renderQuestion();}
+function stats(){$('counter').textContent=`${index+1} / ${questions.length}`;$('score').textContent=score;const answered=records.length;$('accuracy').textContent=answered?`${Math.round(records.filter(r=>r.tries===1).length/answered*100)}%`:'—';$('bar').style.width=`${answered/questions.length*100}%`;$('altitude').textContent=`高度 ${answered*100} m`;}
+function renderQuestion(){selected=-1;tries=0;hinted=false;solved=false;const q=questions[index];$('category').textContent=q.category;$('question').textContent=q.text;$('answers').replaceChildren();q.choices.forEach((v,i)=>{const b=document.createElement('button');b.className='answer';b.setAttribute('aria-pressed','false');const k=document.createElement('span');k.className='key';k.textContent=`0${i+1}`;b.append(k,document.createTextNode(v));b.onclick=()=>choose(i);$('answers').append(b);});$('feedback').className='feedback';$('feedback').textContent='先讀題目，選好答案後再確認。';$('hint').disabled=false;$('submit').hidden=false;$('submit').disabled=true;$('next').hidden=true;stats();$('question').focus();}
+function choose(i){if(state!=='play'||solved)return;const bs=[...$('answers').children];if(bs[i].disabled)return;selected=i;bs.forEach((b,j)=>{b.classList.toggle('selected',i===j);b.setAttribute('aria-pressed',String(i===j));});$('submit').disabled=false;}
+function submit(){if(state!=='play'||solved||selected<0)return;const q=questions[index];tries++;const b=$('answers').children[selected];if(q.choices[selected]!==q.answer){b.classList.remove('selected');b.classList.add('wrong');b.setAttribute('aria-pressed','false');b.disabled=true;selected=-1;$('submit').disabled=true;$('feedback').className='feedback error';$('feedback').textContent=`還差一步，再想想！${q.hint}`;tone(false);return;}
+ solved=true;const earned=tries>1?60:hinted?80:100;score+=earned;records.push({q,tries,hinted,earned});for(const a of $('answers').children)a.disabled=true;b.classList.add('correct');$('hint').disabled=true;$('submit').hidden=true;$('next').hidden=false;$('next').textContent=index===questions.length-1?'查看任務成果 →':'下一題 →';$('feedback').className='feedback';$('feedback').textContent=`答對了！＋${earned} 分。${q.explain}`;jump={start:performance.now(),from:height,to:records.length};tone(true);stats();$('next').focus();}
+function finish(){state='result';show('resultPanel');$('finalScore').textContent=`${score} 分`;$('resultTitle').textContent=`成功抵達 ${records.length*100} 公尺！`;const first=records.filter(r=>r.tries===1).length;$('summary').textContent=`完成 ${records.length} 題｜首答正確 ${first} 題（${Math.round(first/records.length*100)}%）｜使用提示 ${records.filter(r=>r.hinted).length} 題`;$('review').replaceChildren();records.forEach((r,i)=>{const d=document.createElement('div');d.className='reviewItem';const b=document.createElement('b');b.textContent=`${i+1}. ${r.q.text}`;const p=document.createElement('p');p.textContent=`${r.tries===1?'首答正確':'重試後完成'}${r.hinted?' · 使用提示':''}｜答案：${r.q.answer}`;const e=document.createElement('p');e.className='muted';e.textContent=r.q.explain;d.append(b,p,e);$('review').append(d);});$('again').focus();}
+function reset(){state='start';height=0;jump=null;score=0;records=[];questions=[];$('altitude').textContent='高度 0 m';show('startPanel');$('start').focus();}
+function pause(){if(state!=='play')return;pausedFrom=state;state='paused';show('pausePanel');$('resume').focus();}
+$('start').onclick=start;$('again').onclick=start;$('settings').onclick=reset;$('submit').onclick=submit;
+$('next').onclick=()=>{if(!solved||state!=='play')return;if(index+1===questions.length)finish();else{index++;renderQuestion();}};
+$('hint').onclick=()=>{if(state!=='play'||solved)return;hinted=true;$('feedback').className='feedback';$('feedback').textContent=questions[index].hint;$('hint').disabled=true;};
+$('pause').onclick=pause;$('resume').onclick=()=>{state=pausedFrom;show('playPanel');$('question').focus();};
+$('restart').onclick=()=>{$('confirmReset').showModal();$('cancelReset').focus();};$('cancelReset').onclick=()=>$('confirmReset').close();$('doReset').onclick=()=>{$('confirmReset').close();reset();};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+document.addEventListener('keydown',e=>{if(state!=='play'||$('confirmReset').open||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;if(/^[1-4]$/.test(e.key)){e.preventDefault();choose(Number(e.key)-1);}if(e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();submit();}});
+// Native buttons use Space themselves. When an answer owns focus, Space confirms it.
+$('answers').addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(!e.repeat)submit();}});
+const canvas=$('gameCanvas'),ctx=canvas.getContext('2d');let w=600,h=560;
+function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);w=r.width;h=r.height;canvas.width=Math.round(w*d);canvas.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);draw(performance.now());}
+function ellipse(x,y,rx,ry,color){ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();}
+function draw(now){ctx.clearRect(0,0,w,h);const sky=ctx.createLinearGradient(0,0,w,h);sky.addColorStop(0,'#101b39');sky.addColorStop(1,'#173a50');ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);for(let i=0;i<75;i++){const x=(Math.sin(i*78.23)*.5+.5)*w,y=(Math.cos(i*29.87)*.5+.5)*h;ellipse(x,y,i%4===0?1.5:.7,i%4===0?1.5:.7,i%3?'#b5d7ed':'#73f3d4');}
+ ellipse(w*.78,h*.25,Math.min(w,h)*.18,Math.min(w,h)*.18,'#304868');ctx.save();ctx.translate(w*.78,h*.25);ctx.rotate(-.35);ctx.strokeStyle='#72a2b577';ctx.lineWidth=9;ctx.beginPath();ctx.ellipse(0,0,Math.min(w,h)*.26,Math.min(w,h)*.055,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+ let p=1;if(jump){p=reduced?1:Math.min(1,(now-jump.start)/850);height=jump.from+(jump.to-jump.from)*(1-Math.pow(1-p,3));if(p===1)jump=null;}
+ const base=h*.78,gap=Math.min(105,h*.2),cx=w*.45;
+ for(let i=-1;i<5;i++){const y=base-i*gap+(height%1)*gap;if(y>h-20||y<80)continue;const x=cx+(i%2?40:-20);ellipse(x,y+12,78,16,'#081225');ctx.fillStyle='#263e5e';ctx.fillRect(x-75,y,150,12);ellipse(x,y,75,16,'#365877');ctx.strokeStyle='#75f7d5';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y-2,64,10,0,0,Math.PI*2);ctx.stroke();}
+ const lift=jump?Math.sin(p*Math.PI)*gap*.65:0;ctx.save();ctx.translate(cx-20,base-34-lift);ctx.scale(h<350?.8:1, h<350?.8:1);if(jump){ctx.fillStyle='#ffd783';ctx.beginPath();ctx.moveTo(-9,24);ctx.lineTo(0,52+Math.sin(now/40)*7);ctx.lineTo(10,24);ctx.fill();}ctx.fillStyle='#8fb5d0';ctx.fillRect(-26,-8,12,32);ctx.fillStyle='#e3eff7';ctx.fillRect(-18,-7,36,32);ctx.fillStyle='#83f9d6';ctx.fillRect(-7,1,14,9);ctx.fillStyle='#a8c8e0';ctx.fillRect(-17,23,12,12);ctx.fillRect(5,23,12,12);ellipse(0,-20,26,25,'#eef8ff');ellipse(2,-20,20,15,'#142b45');ellipse(7,-24,10,4,'#7cf8d2');ctx.restore();
+ ctx.fillStyle='#8ba9c4';ctx.font='11px system-ui';ctx.fillText('ORBIT / '+String(Math.floor(height)).padStart(2,'0'),24,h-52);
+}
+function frame(t){if(!document.hidden&&state!=='paused')draw(t);requestAnimationFrame(frame);}new ResizeObserver(resize).observe(canvas);requestAnimationFrame(frame);
+</script>
+</body></html>
